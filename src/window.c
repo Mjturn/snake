@@ -2,6 +2,22 @@
 #include <stdbool.h>
 #include <time.h>
 #include "../headers/window.h"
+#include "../headers/snake.h"
+    
+typedef struct {
+    int width;
+    int height;
+    int x;
+    int y;
+    int speed;
+
+    int red;
+    int green;
+    int blue;
+    int alpha;
+} Snake;
+
+Snake snake;
 
 void initialize_window() {
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -58,20 +74,43 @@ void initialize_window() {
         SDL_Quit();
         return;
     }
-    
+
+    run(window, renderer, screen_width, screen_height, font);
+}
+
+void run(SDL_Window* window, SDL_Renderer* renderer, int screen_width, int screen_height, TTF_Font* font) {
     bool running = true;
     SDL_Event event;
-   
+
+    snake.x = (screen_width - snake.width) / 2;
+    snake.y = (screen_height - snake.height) / 2;
+    snake.speed = 50;
+    
     while(running) {
         while(SDL_PollEvent(&event) != 0) {
-            if(event.type == SDL_QUIT) {
+            move(event, &snake.x, &snake.y, snake.speed);
+            
+            if(event.type == SDL_KEYDOWN) {
+                if(event.key.keysym.sym == SDLK_ESCAPE) {
+                    running = false;
+                }
+            } else if(event.type == SDL_QUIT) {
                 running = false;
             }
         }
-    
-        render_snake(renderer, screen_width, screen_height);
+
+        render_snake(renderer);
         render_food(renderer, screen_width, screen_height);
         render_score(renderer, font, screen_width);
+        
+        int background_color_red = 0;
+        int background_color_green = 0;
+        int background_color_blue = 0;
+        int background_color_alpha = 255;
+
+        SDL_SetRenderDrawColor(renderer, background_color_red, background_color_green, background_color_blue, background_color_alpha);
+        SDL_Rect clear_snake = { snake.x, snake.y, snake.width, snake.height };
+        SDL_RenderFillRect(renderer, &clear_snake);
     }
 
     TTF_CloseFont(font);
@@ -89,31 +128,15 @@ void render_object(SDL_Renderer* renderer, int x, int y, int width, int height, 
 
 }
 
-void render_snake(SDL_Renderer* renderer, int screen_width, int screen_height) {
-    typedef struct {
-        int width;
-        int height;
-        int x;
-        int y;
-
-        int red;
-        int green;
-        int blue;
-        int alpha;
-    } Snake;
-        
-    Snake snake;
-    
+void render_snake(SDL_Renderer* renderer) {
     snake.width = 25;
     snake.height = 25;
-    snake.x = (screen_width - snake.width) / 2;
-    snake.y = (screen_height - snake.height) / 2;
-
+    
     snake.red = 255;
     snake.green = 255;
     snake.blue = 255;
     snake.alpha = 255;
-
+    
     render_object(renderer, snake.x, snake.y, snake.width, snake.height, snake.red, snake.green, snake.blue, snake.alpha);
 }
 
