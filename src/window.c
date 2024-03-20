@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include <stdbool.h>
 #include <time.h>
+#include <unistd.h>
 #include "../headers/window.h"
 #include "../headers/snake.h"
     
@@ -18,6 +18,21 @@ typedef struct {
 } Snake;
 
 Snake snake;
+    
+typedef struct {
+    int width;
+    int height;
+    int x;
+    int y;
+
+    int red;
+    int green;
+    int blue;
+    int alpha;
+} Food;
+
+Food food;
+    
 
 void initialize_window() {
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -85,7 +100,7 @@ void run(SDL_Window* window, SDL_Renderer* renderer, int screen_width, int scree
     snake.x = (screen_width - snake.width) / 2;
     snake.y = (screen_height - snake.height) / 2;
     snake.speed = 50;
-    
+
     while(running) {
         while(SDL_PollEvent(&event) != 0) {
             move(event, &snake.x, &snake.y, snake.speed);
@@ -103,6 +118,14 @@ void run(SDL_Window* window, SDL_Renderer* renderer, int screen_width, int scree
         render_food(renderer, screen_width, screen_height);
         render_score(renderer, font, screen_width);
         
+        bool collision_detected = detect_collision(screen_width, screen_height);
+
+        if(collision_detected) {
+            display_game_over_screen(renderer, font, screen_width, screen_height);
+            sleep(5);
+            running = false;
+        }
+
         int background_color_red = 0;
         int background_color_green = 0;
         int background_color_blue = 0;
@@ -148,20 +171,6 @@ void render_food(SDL_Renderer* renderer, int screen_width, int screen_height) {
     }
     
     srand(time(NULL));
-
-    typedef struct {
-        int width;
-        int height;
-        int x;
-        int y;
-
-        int red;
-        int green;
-        int blue;
-        int alpha;
-    } Food;
-
-    Food food;
         
     food.width = 25;
     food.height = 25;
@@ -215,4 +224,55 @@ void render_score(SDL_Renderer* renderer, TTF_Font* font, int screen_width) {
 
     SDL_FreeSurface(text_surface);
     SDL_DestroyTexture(text_texture);
+}
+
+bool detect_collision(int screen_width, int screen_height) {
+    if((snake.x == food.x && snake.y == food.y) || (snake.x < 0 || snake.y < 0 || snake.x > screen_width || snake.y > screen_height)) {
+        return true;
+    }
+
+    return false;
+}
+
+void display_game_over_screen(SDL_Renderer* renderer, TTF_Font* font, int screen_width, int screen_height) {
+    int background_color_red = 0;
+    int background_color_green = 0;
+    int background_color_blue = 0;
+    int background_color_alpha = 255;
+
+    SDL_SetRenderDrawColor(renderer, background_color_red, background_color_green, background_color_blue, background_color_alpha);
+    SDL_RenderClear(renderer);
+    
+    int text_color_red = 255;
+    int text_color_green = 255;
+    int text_color_blue = 255;
+
+    char game_over_text[] = "Game Over";
+    SDL_Color text_color = { text_color_red, text_color_green, text_color_blue };
+    
+    SDL_Surface* text_surface = TTF_RenderText_Solid(font, game_over_text, text_color);
+    
+    if(text_surface == NULL) {
+        fprintf(stderr, "Failed to render text surface. SDL_ttf Error: %s\n", TTF_GetError());
+        return;
+    }
+    
+    SDL_Texture* text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
+    
+    if (text_texture == NULL) {
+        fprintf(stderr, "Failed to create text texture. SDL Error: %s\n", SDL_GetError());
+        return;
+    }
+
+    int text_width = text_surface->w;
+    int text_height = text_surface->h;
+    int text_x = (screen_width - text_width) / 2;
+    int text_y = (screen_height - text_height) / 2;
+
+    SDL_Rect text = { text_x, text_y, text_width, text_height };
+    SDL_RenderCopy(renderer, text_texture, NULL, &text);
+
+    SDL_FreeSurface(text_surface);
+    SDL_DestroyTexture(text_texture);
+    SDL_RenderPresent(renderer);
 }
