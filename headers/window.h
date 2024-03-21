@@ -10,7 +10,8 @@ void run(SDL_Window* window, SDL_Renderer* renderer, int screen_width, int scree
 void render_object(SDL_Renderer* renderer, int x, int y, int width, int height, int red, int green, int blue, int alpha);
 void render_snake(SDL_Renderer* renderer);
 void render_food(SDL_Renderer* renderer, int screen_width, int screen_height);
-void render_score(SDL_Renderer* renderer, TTF_Font* font, int screen_width);
+void render_score(SDL_Renderer* renderer, int background_color_red, int background_color_green, int background_color_blue, int background_color_alpha, int score, TTF_Font* font, int screen_width);
+void clear_score(SDL_Renderer* renderer, int screen_width, int background_color_red, int background_color_green, int background_color_blue, int background_color_alpha);
 bool detect_collision(int screen_width, int screen_height);
 void display_game_over_screen(SDL_Renderer* renderer, TTF_Font* fonti, int screen_width, int screen_height);
 

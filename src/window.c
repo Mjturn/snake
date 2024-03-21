@@ -99,7 +99,15 @@ void run(SDL_Window* window, SDL_Renderer* renderer, int screen_width, int scree
 
     snake.x = (screen_width - snake.width) / 2;
     snake.y = (screen_height - snake.height) / 2;
-    snake.speed = 50;
+    snake.speed = 1;
+        
+    int background_color_red = 0;
+    int background_color_green = 0;
+    int background_color_blue = 0;
+    int background_color_alpha = 255;
+
+    bool food_eaten = false;
+    int score = 0;
 
     while(running) {
         while(SDL_PollEvent(&event) != 0) {
@@ -116,7 +124,8 @@ void run(SDL_Window* window, SDL_Renderer* renderer, int screen_width, int scree
 
         render_snake(renderer);
         render_food(renderer, screen_width, screen_height);
-        render_score(renderer, font, screen_width);
+        render_score(renderer, background_color_red, background_color_green, background_color_blue, background_color_alpha, score, font, screen_width);
+        eat(snake.x, snake.y, food.x, food.y, &food_eaten, &score);
         
         bool collision_detected = detect_collision(screen_width, screen_height);
 
@@ -126,10 +135,6 @@ void run(SDL_Window* window, SDL_Renderer* renderer, int screen_width, int scree
             running = false;
         }
 
-        int background_color_red = 0;
-        int background_color_green = 0;
-        int background_color_blue = 0;
-        int background_color_alpha = 255;
 
         SDL_SetRenderDrawColor(renderer, background_color_red, background_color_green, background_color_blue, background_color_alpha);
         SDL_Rect clear_snake = { snake.x, snake.y, snake.width, snake.height };
@@ -187,12 +192,13 @@ void render_food(SDL_Renderer* renderer, int screen_width, int screen_height) {
     food_rendered = true;
 }
 
-void render_score(SDL_Renderer* renderer, TTF_Font* font, int screen_width) {
-    int score = 0;
+void render_score(SDL_Renderer* renderer, int background_color_red, int background_color_green, int background_color_blue, int background_color_alpha, int score, TTF_Font* font, int screen_width) {
+    clear_score(renderer, screen_width, background_color_red, background_color_green, background_color_blue, background_color_alpha);
+
     char score_text[20];
     SDL_Surface* text_surface = NULL;
     SDL_Texture* text_texture = NULL;
-    
+
     sprintf(score_text, "Score: %d", score);
 
     int score_red = 255;
@@ -226,8 +232,19 @@ void render_score(SDL_Renderer* renderer, TTF_Font* font, int screen_width) {
     SDL_DestroyTexture(text_texture);
 }
 
+void clear_score(SDL_Renderer* renderer, int screen_width, int background_color_red, int background_color_green, int background_color_blue, int background_color_alpha) {
+    int clear_text_width = screen_width;
+    int clear_text_height = 25;
+    int clear_text_x = (screen_width - clear_text_width) / 2;
+    int clear_text_y = 10;
+    
+    SDL_SetRenderDrawColor(renderer, background_color_red, background_color_green, background_color_blue, background_color_alpha);
+    SDL_Rect clear_score = { clear_text_x, clear_text_y, clear_text_width, clear_text_height };
+    SDL_RenderFillRect(renderer, &clear_score);
+}
+
 bool detect_collision(int screen_width, int screen_height) {
-    if((snake.x == food.x && snake.y == food.y) || (snake.x < 0 || snake.y < 0 || snake.x > screen_width || snake.y > screen_height)) {
+    if(snake.x < 0 || snake.y < 0 || snake.x > screen_width || snake.y > screen_height) {
         return true;
     }
 
